@@ -10,6 +10,9 @@ on:
 jobs:
   generate-and-publish:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./carbonsettle-main
     
     steps:
       - name: Checkout repository
