@@ -5,12 +5,15 @@ import datetime
 import random
 import anthropic
 import glob
+import json
+import re
 import time
 
 # Configuration
 BLOG_DIR = "src/content/blog"
+STATE_FILE = ".automation_state.json"
 API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-START_DATE_STR = "2026-01-26" # Launch Date
+START_DATE_STR = "2026-01-26" # Launch Date (Fixed)
 
 if not API_KEY:
     print("Error: ANTHROPIC_API_KEY not found in environment variables.")
@@ -42,77 +45,89 @@ TOPICS = [
     "Data Gaps in Indian Factory Logs: How to Reconstruct Forensic History",
 ]
 
-def get_throttling_limit():
-    start_date = datetime.datetime.strptime(START_DATE_STR, "%Y-%m-%d").date()
+def load_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_state(state):
+    with open(STATE_FILE, 'w') as f:
+        json.dump(state, f, indent=2)
+
+def get_daily_limit(start_date):
     today = datetime.date.today()
     days_passed = (today - start_date).days
+    return 4 if days_passed < 7 else 3
+
+def check_throttling():
+    state = load_state()
+    today_str = datetime.date.today().isoformat()
     
-    if days_passed < 5:
-        return 1
-    elif days_passed < 14:
-        return 2
-    else:
-        return 3
+    # Initialize state if needed
+    if "first_run_date" not in state:
+        state["first_run_date"] = today_str
+        
+    start_date = datetime.datetime.strptime(state["first_run_date"], "%Y-%m-%d").date()
+    daily_limit = get_daily_limit(start_date)
+    
+    # Reset counter if new day
+    if state.get("last_run_date") != today_str:
+        state["posts_generated_today"] = 0
+        state["last_run_date"] = today_str
+        
+    current_count = state.get("posts_generated_today", 0)
+    
+    print(f"Throttling Check: Day { (datetime.date.today() - start_date).days + 1 }")
+    print(f"Generated Today: {current_count} / {daily_limit}")
+    
+    if current_count >= daily_limit:
+        print("Daily limit reached. Exiting gracefully.")
+        save_state(state) # Ensure date update is saved
+        return False, state
+        
+    return True, state
 
-def check_daily_limit_reached(limit):
-    today = datetime.date.today().isoformat()
-    # Check existing files generated today
-    files = glob.glob(os.path.join(BLOG_DIR, f"{today}-*.mdx"))
-    count = len(files)
-    print(f"Posts generated today ({today}): {count}. Limit: {limit}")
-    return count >= limit
-
-def get_existing_slugs_and_titles():
+def get_existing_titles():
     files = glob.glob(os.path.join(BLOG_DIR, "*.mdx"))
-    slugs = set()
     titles = set()
     for f in files:
-        filename = os.path.basename(f)
-        slug = filename.replace(".mdx", "")
-        slugs.add(slug)
-        
-        # Read title for semantic check
         try:
             with open(f, 'r', encoding='utf-8') as file:
-                for line in file:
-                    if line.startswith("title:"):
-                        first_line_title = line.replace("title:", "").strip().lower()
-                        titles.add(first_line_title)
-                        break
+                content = file.read()
+                match = re.search(r'^title:\s*(.+)$', content, re.MULTILINE)
+                if match:
+                    titles.add(match.group(1).strip().lower())
         except:
             pass
-            
-    return slugs, titles
+    return titles
 
 def check_duplicate(topic, existing_titles):
     topic_clean = topic.lower().strip()
-    # 1. Direct match
     if topic_clean in existing_titles:
         return True
     
-    # 2. Simple Keyword Overlap (Jaccard Similarity on tokens)
     topic_tokens = set(topic_clean.split())
     for title in existing_titles:
         title_tokens = set(title.split())
-        intersection = topic_tokens.intersection(title_tokens)
-        if len(intersection) / len(topic_tokens) > 0.8: # >80% overlap
-            return True
-            
+        if len(title_tokens) > 0:
+            intersection = topic_tokens.intersection(title_tokens)
+            if len(intersection) / len(topic_tokens) > 0.8: 
+                return True
     return False
 
 def generate_blog_post():
-    # 1. Check Throttling
-    limit = get_throttling_limit()
-    if check_daily_limit_reached(limit):
-        print("Daily limit reached. Skipping generation.")
-        # Ensure script exits successfully (0) so Action doesn't fail, just does nothing
+    # 1. Throttling
+    can_run, state = check_throttling()
+    if not can_run:
         sys.exit(0)
 
-    # 2. Duplicate Protection
-    existing_slugs, existing_titles = get_existing_slugs_and_titles()
+    # 2. Topic Selection
+    existing_titles = get_existing_titles()
     selected_topic = None
-    
-    # Shuffle to pick random candidate
     random.shuffle(TOPICS)
     
     for candidate in TOPICS:
@@ -121,148 +136,106 @@ def generate_blog_post():
             break
             
     if not selected_topic:
-        print("No new unique topics found in pool.")
+        print("No new unique topics found.")
         sys.exit(0)
 
     print(f"Selected Topic: {selected_topic}")
 
-    # 3. Hardened System Prompt
+    # 3. Enhanced System Prompt
     system_prompt = """
-    You are a Senior Forensic Carbon Auditor and EU Regulatory Expert. 
-    You write technical, authoritative guidance for Indian steel and fastener manufacturers exporting to the EU.
+    You are a Senior Forensic Carbon Auditor and EU Regulatory Expert.
     
-    You are writing for CBAM compliance professionals.
-    You MUST:
-    - Cite Regulation (EU) 2023/956 explicitly when referencing CBAM law
-    - Avoid speculation unless clearly labeled
-    - Never invent penalties, dates, or percentages
-    - Use Indian manufacturing terminology where relevant
-    - Assume the reader is operational, not academic
+    OBJECTIVE:
+    Write a high-authority, technical guidance article for Indian steel exporters dealing with EU CBAM (Regulation 2023/956).
     
-    TONE AND STYLE:
-    - Authoritative, professional, and dry.
-    - Zero marketing fluff. No "In today's fast paced world...".
-    - Direct, actionable, and regulatory-focused.
-    - Use technical terms: "Embedded Emissions", "CN Code", "Installation", "Precursor", "Aggregated Goods".
+    MANDATORY CONTENT REQUIREMENTS:
+    1. Length: Minimum 1350 words.
+    2. Structure: Minimum 6 H2 sections.
+    3. Data: Must include at least 1 Data Table (Markdown format) representing hypothetical but realistic emission factors or cost scenarios.
+    4. Metrics: Include at least 2 specific numeric figures (e.g., "€85/tonne CO2", "2026 definitive period", "20% tolerance").
+    5. Citations: Explicitly cite "Regulation (EU) 2023/956" at least once.
+    6. Freshness: Include a specific section titled "## 2025-2026 Regulatory Impact" or "## Recent Developments".
     
-    FORMAT:
-    - Markdown (MDX compatible).
-    - H2 and H3 headers.
-    - Clear bullet points for regulatory steps.
-    - MUST include a "Key Takeaways" section at the top.
-    - MUST include a FAQ section at the bottom (valid Schema markup structure not needed, just text).
+    ANTI-HALLUCINATION RULES:
+    - Do NOT invent specific court cases or company fines.
+    - Do NOT give legal advice (use "compliance guidance" instead).
+    - If a specific default value is unknown, state "refer to the latest EU Implementing Act".
     
-    CRITICAL RULES:
-    - Do NOT invent specific legal outcomes for specific companies.
-    - Emphasize "Actual Data" over "Default Values".
-    - Mention "CarbonSettle" organically as the solution for "Forensic Data Extraction" or "XML Generation" once or twice.
+    TONE:
+    - Dry, forensic, and operational.
+    - No fluff ("In the ever-changing landscape...").
+    - Focus on "Installation", "Precursors", "Direct/Indirect Emissions", "Aggregated Goods".
+    
+    OUTPUT FORMAT:
+    - Strict MDX/Markdown.
+    - Start immediately with Frontmatter.
+    - Include a "## Key Takeaways" section at the start.
+    - Include a "## Frequently Asked Questions" section at the end (3 Q&A min).
     """
     
     user_prompt = f"""
     Write a complete technical article about: "{selected_topic}".
     
-    Requirements:
-    - Length: Minimum 1200 words.
-    - Structure: At least 5 distinct H2 sections.
-    - FAQ: At least 3 detailed Q&A at the end.
-    
-    Structure:
-    1. Title: Create a high-CTR but professional title.
-    2. Slug: Create a URL-friendly slug.
-    3. Meta Description: SEO optimized (155 chars).
-    4. Category: Choose one of [CBAM Basics, Technical Calculation, Compliance Updates, Case Studies].
-    5. Body: The full article.
-    
-    Output NOT JSON. Output raw text where the first few lines are Frontmatter in YAML format between ---.
-    Example:
+    Frontmatter format:
     ---
-    title: Actual Title
+    title: {selected_topic}
     date: YYYY-MM-DD
-    description: Meta description
+    description: [SEO description, max 160 chars]
     category: Technical Calculation
     ---
     
-    [Article Content]
+    Ensure the "date" field uses the placeholder YYYY-MM-DD exactly so I can replace it programmatically.
     """
 
     try:
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=5000, # Increased for length req
-            temperature=0.7,
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=6000,
+            temperature=0.5, # Lower temp for more factual output
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ]
+            messages=[{"role": "user", "content": user_prompt}]
         )
         
-        content = message.content[0].text
+        content = response.content[0].text
         
-        # 4. Quality Gates & Frontmatter Normalization
-        word_count = len(content.split())
-        h2_count = content.count("## ")
-        
-        if word_count < 1000: # Soft buffer for 1200
-            raise ValueError(f"Generated content too short: {word_count} words.")
-        
-        if h2_count < 4: # Soft buffer for 5
-             raise ValueError(f"Generated content low complexity: {h2_count} H2 headers.")
+        # 4. Validation & Normalization
+        if len(content.split()) < 1000:
+             raise ValueError("Generated content too short.")
              
-        if "FAQ" not in content and "Frequently Asked Questions" not in content:
-            raise ValueError("Missing FAQ section.")
-
-        # --- Frontmatter Processing ---
-        # 1. Extract existing frontmatter
-        import re
         today = datetime.date.today().isoformat()
         
-        frontmatter_match = re.search(r'^---\n(.*?)\n---', content, re.DOTALL)
-        if frontmatter_match:
-            fm_text = frontmatter_match.group(1)
-            # Check for date in frontmatter
-            if re.search(r'^date:', fm_text, re.MULTILINE):
-                # Date exists, ensure it's valid or leave it? 
-                # User says: Keep the correct publication date, ensure exactly once.
-                # If Claude wrote "date: YYYY-MM-DD", we need to fix it.
-                if "date: YYYY-MM-DD" in fm_text:
-                     new_fm_text = fm_text.replace("date: YYYY-MM-DD", f"date: {today}")
-                     content = content.replace(fm_text, new_fm_text)
-                else:
-                    # Date exists and isn't the placeholder, assume valid. 
-                    # Do NOT inject another one.
-                    pass
-            else:
-                # Date missing in FM block, inject it
-                new_fm_text = f"{fm_text}\ndate: {today}"
-                content = content.replace(fm_text, new_fm_text)
+        # Robust Frontmatter Date Injection
+        match = re.search(r"^---\n(.*?)\n---", content, re.DOTALL)
+        if match:
+            fm = match.group(1)
+            # Remove any existing date line to prevent duplicates
+            fm_clean = re.sub(r"^date:.*$", "", fm, flags=re.MULTILINE).strip()
+            # Reconstruct safe frontmatter
+            new_fm = f"{fm_clean}\ndate: {today}"
+            content = content.replace(match.group(1), new_fm)
         else:
-            # No frontmatter found at all? This is weird given the prompt, but handle it.
-            # Prepend fresh frontmatter
-            content = f"---\ntitle: {selected_topic}\ndate: {today}\n---\n\n{content}"
+             # Fallback
+             content = f"---\ntitle: {selected_topic}\ndate: {today}\ndescription: Auto-generated CBAM guide.\ncategory: Compliance\n---\n\n{content}"
 
-        # Double check for duplicate keys just in case
-        # (Naive check: count usage of "date:")
-        # We assume the regex replacement above was safe. 
-        
         # Safe Slug
-        safe_slug = selected_topic.lower().replace(" ", "-").replace(":", "").replace("?", "").replace("/", "")[:60] # Truncate long slugs
-        filename = f"{today}-{safe_slug}.mdx"
-        filepath = os.path.join(BLOG_DIR, filename)
+        safe_slug = selected_topic.lower().replace(" ", "-").replace(":", "").replace("?", "").replace("/", "")[:60]
+        filepath = os.path.join(BLOG_DIR, f"{today}-{safe_slug}.mdx")
         
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
             
-        print(f"Successfully generated: {filepath} (Words: {word_count}, H2: {h2_count})")
-        return True
-
+        # 5. Update State
+        state["posts_generated_today"] += 1
+        state["total_posts"] = state.get("total_posts", 0) + 1
+        save_state(state)
+        
+        print(f"SUCCESS: Generated {filepath}")
+        
     except Exception as e:
-        print(f"CRITICAL FAILURE: {e}")
-        # Exit with error code to alert GitHub Actions
-        sys.exit(1) 
+        print(f"FAILURE: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
-    # Ensure directory exists
     if not os.path.exists(BLOG_DIR):
         os.makedirs(BLOG_DIR)
-        
     generate_blog_post()
