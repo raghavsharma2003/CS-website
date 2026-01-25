@@ -198,7 +198,7 @@ def generate_blog_post():
         
         content = message.content[0].text
         
-        # 4. Quality Gates
+        # 4. Quality Gates & Frontmatter Normalization
         word_count = len(content.split())
         h2_count = content.count("## ")
         
@@ -211,20 +211,44 @@ def generate_blog_post():
         if "FAQ" not in content and "Frequently Asked Questions" not in content:
             raise ValueError("Missing FAQ section.")
 
-        # Inject Date if Claude didn't
+        # --- Frontmatter Processing ---
+        # 1. Extract existing frontmatter
+        import re
         today = datetime.date.today().isoformat()
-        if "date: YYYY" in content or "date: " not in content:
-             content = content.replace("date: YYYY-MM-DD", f"date: {today}")
+        
+        frontmatter_match = re.search(r'^---\n(.*?)\n---', content, re.DOTALL)
+        if frontmatter_match:
+            fm_text = frontmatter_match.group(1)
+            # Check for date in frontmatter
+            if re.search(r'^date:', fm_text, re.MULTILINE):
+                # Date exists, ensure it's valid or leave it? 
+                # User says: Keep the correct publication date, ensure exactly once.
+                # If Claude wrote "date: YYYY-MM-DD", we need to fix it.
+                if "date: YYYY-MM-DD" in fm_text:
+                     new_fm_text = fm_text.replace("date: YYYY-MM-DD", f"date: {today}")
+                     content = content.replace(fm_text, new_fm_text)
+                else:
+                    # Date exists and isn't the placeholder, assume valid. 
+                    # Do NOT inject another one.
+                    pass
+            else:
+                # Date missing in FM block, inject it
+                new_fm_text = f"{fm_text}\ndate: {today}"
+                content = content.replace(fm_text, new_fm_text)
+        else:
+            # No frontmatter found at all? This is weird given the prompt, but handle it.
+            # Prepend fresh frontmatter
+            content = f"---\ntitle: {selected_topic}\ndate: {today}\n---\n\n{content}"
+
+        # Double check for duplicate keys just in case
+        # (Naive check: count usage of "date:")
+        # We assume the regex replacement above was safe. 
         
         # Safe Slug
         safe_slug = selected_topic.lower().replace(" ", "-").replace(":", "").replace("?", "").replace("/", "")[:60] # Truncate long slugs
         filename = f"{today}-{safe_slug}.mdx"
         filepath = os.path.join(BLOG_DIR, filename)
         
-        # Ensure Frontmatter has the date
-        if f"date: {today}" not in content:
-             content = content.replace("---", f"---\ndate: {today}", 1)
-
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
             

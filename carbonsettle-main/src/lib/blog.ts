@@ -31,16 +31,29 @@ export function getBlogPosts(): BlogPost[] {
     .map((fileName) => {
       const slug = fileName.replace(/\.mdx?$/, "");
       const fullPath = path.join(blogDirectory, fileName);
-      const fileContents = fs.readFileSync(fullPath, "utf8");
-      
-      const { data, content } = matter(fileContents);
 
-      return {
-        slug,
-        frontmatter: data as BlogFrontmatter,
-        content,
-      };
-    });
+      try {
+        const fileContents = fs.readFileSync(fullPath, "utf8");
+        const { data, content } = matter(fileContents);
+
+        // Ensure date is serializable (gray-matter returns Date object for YYYY-MM-DD)
+        let frontmatter = data as unknown as BlogFrontmatter;
+        // Check if date is Date object
+        if (data.date && data.date instanceof Date) {
+          frontmatter = { ...data, date: data.date.toISOString() } as BlogFrontmatter;
+        }
+
+        return {
+          slug,
+          frontmatter,
+          content,
+        };
+      } catch (err) {
+        console.error(`Error parsing blog post ${fileName}:`, err);
+        return null;
+      }
+    })
+    .filter((post): post is BlogPost => post !== null);
 
   // Sort posts by date
   return allPostsData.sort((a, b) => {
@@ -55,7 +68,7 @@ export function getBlogPosts(): BlogPost[] {
 export function getBlogPost(slug: string): BlogPost | null {
   const fullPathMdx = path.join(blogDirectory, `${slug}.mdx`);
   const fullPathMd = path.join(blogDirectory, `${slug}.md`);
-  
+
   let fullPath = "";
   if (fs.existsSync(fullPathMdx)) {
     fullPath = fullPathMdx;
@@ -65,23 +78,34 @@ export function getBlogPost(slug: string): BlogPost | null {
     return null;
   }
 
-  const fileContents = fs.readFileSync(fullPath, "utf8");
-  const { data, content } = matter(fileContents);
+  try {
+    const fileContents = fs.readFileSync(fullPath, "utf8");
+    const { data, content } = matter(fileContents);
 
-  return {
-    slug,
-    frontmatter: data as BlogFrontmatter,
-    content,
-  };
+    // Ensure date is serializable
+    let frontmatter = data as unknown as BlogFrontmatter;
+    if (data.date && data.date instanceof Date) {
+      frontmatter = { ...data, date: data.date.toISOString() } as BlogFrontmatter;
+    }
+
+    return {
+      slug,
+      frontmatter,
+      content,
+    };
+  } catch (error) {
+    console.error(`Error loading blog post ${slug}:`, error);
+    return null;
+  }
 }
 
 export function getAllTags(): string[] {
   const posts = getBlogPosts();
   const tags = new Set<string>();
   posts.forEach(post => {
-      if (post.frontmatter.category) {
-          tags.add(post.frontmatter.category);
-      }
+    if (post.frontmatter.category) {
+      tags.add(post.frontmatter.category);
+    }
   });
   return Array.from(tags).sort();
 }
