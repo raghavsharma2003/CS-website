@@ -106,7 +106,37 @@ def check_throttling():
         
     return True, state
 
-# ... (omitted helper functions check_duplicate etc - they remain unchanged) ...
+def get_existing_titles():
+    files = glob.glob(os.path.join(BLOG_DIR, "*.mdx"))
+    titles = set()
+    for f in files:
+        try:
+            with open(f, 'r', encoding='utf-8') as file:
+                content = file.read()
+                match = re.search(r'^title:\s*(.+)$', content, re.MULTILINE)
+                if match:
+                    titles.add(match.group(1).strip().lower())
+        except:
+            pass
+    return titles
+
+def check_duplicate(topic, existing_titles):
+    topic_clean = topic.lower().strip()
+    if topic_clean in existing_titles:
+        return True
+    
+    topic_tokens = set(topic_clean.split())
+    # prevent div by zero
+    if not topic_tokens: 
+        return False
+
+    for title in existing_titles:
+        title_tokens = set(title.split())
+        if len(title_tokens) > 0:
+            intersection = topic_tokens.intersection(title_tokens)
+            if len(intersection) / len(topic_tokens) > 0.8: 
+                return True
+    return False
 
 def generate_blog_post():
     # 1. Throttling
