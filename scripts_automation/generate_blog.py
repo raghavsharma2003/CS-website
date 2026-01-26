@@ -27,12 +27,13 @@ if not API_KEY:
 
 client = anthropic.Anthropic(api_key=API_KEY)
 
-# Topics Pool
+# Topics Pool - Expanded for 8 blogs/day SEO strategy
 TOPICS = [
+    # Core CBAM Technical Topics
     "Calculation of Embedded Emissions in Steel Imports from India",
     "CBAM Default Values vs Actual Data: Cost Analysis for Exporters",
     "Understanding the CBAM Transitional Registry for Indian Manufacturers",
-    "How to Map HS Codes for Steel Fasteters under EU CBAM",
+    "How to Map HS Codes for Steel Fasteners under EU CBAM",
     "Scope 1 vs Scope 2 Emissions: A Guide for Indian Steel Plants",
     "The Risk of Non-Compliance: Penalties under EU Regulation 2023/956",
     "ISO 14064-1 vs CBAM Methodology: Key Differences Explained",
@@ -49,6 +50,94 @@ TOPICS = [
     "Strategies to Reduce Carbon Liability for High-Carbon Goods Remediation",
     "Quarterly Reporting Deadlines: A Checklist for Compliance Officers",
     "Data Gaps in Indian Factory Logs: How to Reconstruct Forensic History",
+    # Steel Production and Manufacturing
+    "Electric Arc Furnace vs Blast Furnace: CBAM Emission Factor Comparison",
+    "Hot Rolled Coils: Calculating Embedded Carbon for EU Exports",
+    "Cold Rolled Steel Products: CBAM Classification and Reporting Guide",
+    "Galvanized Steel Under CBAM: Coating Process Emissions Accounting",
+    "Wire Rod Manufacturing: Specific CBAM Monitoring Requirements",
+    "Steel Tubes and Pipes: CN Code Classification for CBAM Compliance",
+    "Alloy Steel Products: Additional Emission Factors Under CBAM",
+    "Stainless Steel Exports: Chromium and Nickel Content Impact on CBAM",
+    "Rebar and Construction Steel: CBAM Requirements for Building Materials",
+    "Steel Plates and Sheets: Emission Intensity Calculation Methods",
+    # Compliance and Documentation
+    "CBAM Certificate Purchasing: A Step-by-Step Guide for Importers",
+    "Document Retention Requirements Under EU Regulation 2023/956",
+    "Internal Audit Checklist for CBAM Compliance Readiness",
+    "Training Your Team for CBAM: Essential Skills and Knowledge",
+    "CBAM Compliance Software: Features to Look For",
+    "Managing Multiple Installations Under Single CBAM Declaration",
+    "Cross-Border Supply Chain: CBAM Implications for Multi-Country Operations",
+    "CBAM and Free Trade Agreements: Understanding the Interactions",
+    "Small and Medium Enterprises: Simplified CBAM Compliance Pathways",
+    "CBAM Phase-In Timeline: Key Dates for Indian Exporters",
+    # Emissions Monitoring and Measurement
+    "Installing Carbon Monitoring Systems for CBAM Compliance",
+    "Continuous Emissions Monitoring vs Periodic Measurement Under CBAM",
+    "Fuel Analysis Requirements for Accurate CBAM Reporting",
+    "Electricity Consumption Tracking for Indirect Emission Calculations",
+    "Heat Recovery Systems: Impact on CBAM Emission Calculations",
+    "Process Emissions vs Combustion Emissions: CBAM Classification",
+    "Calibration Requirements for CBAM Monitoring Equipment",
+    "Data Quality Assurance in CBAM Emission Reporting",
+    "Uncertainty Analysis in CBAM Emission Calculations",
+    "Benchmark Emission Factors: When to Use Default Values",
+    # Industry-Specific Guidance
+    "Automotive Steel Components: CBAM Implications for Tier 1 Suppliers",
+    "Construction Industry Supply Chain: CBAM Impact Assessment",
+    "Machinery Manufacturing: Steel Input CBAM Considerations",
+    "Shipbuilding Industry: Managing CBAM for Heavy Steel Plates",
+    "Wind Turbine Components: CBAM and Green Energy Infrastructure",
+    "Railway Infrastructure: CBAM Compliance for Rail Steel Products",
+    "Oil and Gas Pipelines: CBAM Requirements for Pipe Manufacturers",
+    "Pressure Vessels: Special CBAM Considerations for High-Grade Steel",
+    "Agricultural Equipment: CBAM Implications for Farm Machinery Steel",
+    "Aerospace Grade Steel: Premium Products Under CBAM Scope",
+    # Financial and Strategic Topics
+    "Carbon Cost Pass-Through: Negotiating with EU Customers Post-CBAM",
+    "CBAM Certificate Price Forecasting: Factors Influencing EU Carbon Prices",
+    "Hedging Strategies for CBAM Certificate Cost Volatility",
+    "Investment Planning for CBAM Compliance Infrastructure",
+    "Return on Investment: CBAM Compliance System Implementation",
+    "Insurance Considerations for CBAM Non-Compliance Risk",
+    "Banking and Finance: CBAM Impact on Steel Export Financing",
+    "Competitive Analysis: How CBAM Affects Indian Steel Market Position",
+    "Cost Allocation Strategies for CBAM Across Product Lines",
+    "Budget Planning for CBAM: Annual Compliance Cost Estimation",
+    # Regulatory and Legal Topics
+    "EU Member State Competent Authorities: Roles and Responsibilities",
+    "Appeal Procedures for CBAM Penalty Decisions",
+    "Legal Liability: Who Bears CBAM Compliance Risk",
+    "Contractual Clauses for CBAM Cost Allocation in Supply Agreements",
+    "CBAM and WTO Rules: Trade Law Implications",
+    "Confidentiality of CBAM Data: Protection and Disclosure Rules",
+    "Joint Ventures and CBAM: Allocation Between Partners",
+    "Mergers and Acquisitions: CBAM Due Diligence Considerations",
+    "Intellectual Property in CBAM: Protecting Emission Calculation Methods",
+    "Whistleblower Protections in CBAM Enforcement",
+    # Environmental and Sustainability
+    "Science-Based Targets and CBAM: Aligning Corporate Climate Goals",
+    "Life Cycle Assessment vs CBAM Methodology: Key Differences",
+    "Carbon Neutrality Claims: CBAM Implications for Green Steel Marketing",
+    "Renewable Energy Certificates and CBAM Indirect Emissions",
+    "Carbon Capture and Storage: Future Impact on CBAM Calculations",
+    "Hydrogen-Based Steel Production: CBAM Treatment of Green Steel",
+    "Circular Economy and CBAM: Scrap Recycling Benefits",
+    "Environmental Product Declarations and CBAM Data Alignment",
+    "Sustainability Reporting: Integrating CBAM Data into ESG Disclosures",
+    "Climate Risk Assessment: CBAM as a Transition Risk Factor",
+    # Technology and Digital Solutions
+    "Blockchain for CBAM: Traceability and Verification Applications",
+    "AI and Machine Learning in CBAM Emission Estimation",
+    "Digital Twins for Steel Production: CBAM Monitoring Benefits",
+    "Cloud-Based CBAM Compliance Platforms: Security Considerations",
+    "API Integration for Automated CBAM Data Collection",
+    "Mobile Solutions for CBAM Data Capture at Production Sites",
+    "Cybersecurity for CBAM Systems: Protecting Emission Data",
+    "Data Analytics for CBAM Optimization Opportunities",
+    "ERP System Integration for CBAM Compliance Automation",
+    "IoT Sensors for Real-Time CBAM Emission Monitoring",
 ]
 
 def load_state():
@@ -67,9 +156,9 @@ def save_state(state):
         json.dump(state, f, indent=2)
 
 def get_daily_limit(start_date_str):
-    # MANDATED: 6 blogs per day fixed
-    print(f"Limit Config: Fixed at 6 posts/day")
-    return 6
+    # MANDATED: 8 blogs per day fixed
+    print(f"Limit Config: Fixed at 8 posts/day")
+    return 8
 
 def check_throttling():
     state = load_state()
@@ -216,14 +305,18 @@ def generate_blog_post():
         # 4. Validation & Normalization
         if len(content.split()) < 800:
              raise ValueError("Generated content too short.")
-             
+
         today = get_utc_date_str()
-        
-        # Robust Frontmatter Date Injection
+
+        # Robust Frontmatter Date Injection & Cleanup
         match = re.search(r"^---\n(.*?)\n---", content, re.DOTALL)
         if match:
             fm = match.group(1)
-            fm_clean = re.sub(r"^date:.*$", "", fm, flags=re.MULTILINE).strip()
+            # Remove date line
+            fm_clean = re.sub(r"^date:.*$", "", fm, flags=re.MULTILINE)
+            # Remove blank lines from frontmatter (critical for YAML parsing)
+            fm_lines = [line for line in fm_clean.split('\n') if line.strip()]
+            fm_clean = '\n'.join(fm_lines)
             new_fm = f"{fm_clean}\ndate: {today}"
             content = content.replace(match.group(1), new_fm)
         else:

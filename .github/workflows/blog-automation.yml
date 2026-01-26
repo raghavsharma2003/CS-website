@@ -3,8 +3,8 @@ name: Daily Blog Automation
 
 on:
   schedule:
-    # Run at 05:00, 11:00, and 17:00 UTC
-    - cron: '0 2,8,14,20 * * *'
+    # Run 8 times per day (every 3 hours) for SEO blog automation
+    - cron: '0 0,3,6,9,12,15,18,21 * * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
