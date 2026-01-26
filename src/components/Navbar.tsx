@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, X, ExternalLink } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { CBAM_COLLECT_URL } from "@/src/lib/constants";
+import { CBAM_COLLECT_URL } from "../lib/constants";
 import Image from "next/image";
 
 export default function Navbar() {

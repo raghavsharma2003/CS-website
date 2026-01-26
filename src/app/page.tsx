@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import LiabilityCalculator from "@/src/components/forensic/LiabilityCalculator";
 import ComplianceProcessCard from "@/src/components/ComplianceProcessCard";
-import { CBAM_COLLECT_URL } from "@/src/lib/constants";
+import { CBAM_COLLECT_URL } from "../lib/constants";
 import dynamic from "next/dynamic";
 
 import Image from "next/image";
