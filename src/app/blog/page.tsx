@@ -4,8 +4,8 @@ import { getBlogPosts } from '@/src/lib/blog';
 import BlogCard from '@/src/components/blog/BlogCard';
 
 export const metadata = {
-    title: 'CarbonSettle Knowledge Hub | CBAM & Forensic Audits',
-    description: 'Technical guidance on EU CBAM compliance, forensic data extraction, and carbon taxation for Indian exporters.',
+    title: 'CarbonSettle Knowledge Hub | Practical CBAM Guides',
+    description: 'Clear, practical guidance on EU CBAM compliance and updates for Indian exporters. No jargon, just improved export processes.',
 };
 
 export default function BlogIndexPage() {
@@ -15,10 +15,10 @@ export default function BlogIndexPage() {
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-20">
             <div className="max-w-4xl mx-auto text-center mb-16">
                 <h1 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
-                    Forensic Compliance Hub
+                    The Exporter’s Guide to CBAM
                 </h1>
                 <p className="text-lg text-slate-600">
-                    Regulatory updates, technical guides, and forensic engineering standards for EU exports.
+                    Clear explanations, regulatory updates, and practical steps to help your factory stay compliant.
                 </p>
             </div>
 
