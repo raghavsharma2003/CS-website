@@ -4,4 +4,4 @@ export const SITE_NAME = 'CarbonSettle';
 export const SITE_URL = 'https://carbonsettle.com';
 
 // Future-proofed link for CBAM Data Collector
-export const CBAM_COLLECT_URL = 'https://cbam-collect-test.vercel.app/';
+export const CBAM_COLLECT_URL = '/collect/';
