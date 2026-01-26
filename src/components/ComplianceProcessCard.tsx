@@ -74,20 +74,20 @@ export default function ComplianceProcessCard() {
   }, [currentStage]);
 
   return (
-    <div className="absolute top-[8%] left-[6%] w-[55%] sm:w-[50%] md:w-[48%] bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl shadow-2xl p-5 md:p-6 z-20">
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-[68%] max-w-[280px] h-fit sm:translate-y-0 sm:block sm:h-auto sm:top-[8%] sm:bottom-auto sm:left-[6%] sm:w-[50%] md:w-[48%] bg-white/90 backdrop-blur-md border border-white/60 rounded-xl sm:rounded-2xl shadow-2xl p-3 md:p-6 z-20 transition-all duration-300 ease-out">
       {/* Header - Humanized */}
-      <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+      <div className="flex items-center justify-between mb-3 md:mb-5 pb-2 md:pb-3 border-b border-slate-100">
+        <h3 className="text-xs md:text-sm font-bold text-slate-800 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-emerald-500 animate-pulse" />
           Live Process
         </h3>
-        <span className="text-xs text-slate-400 font-medium font-mono">
+        <span className="text-[10px] md:text-xs text-slate-400 font-medium font-mono">
           SECURE_TUNNEL_V2
         </span>
       </div>
 
       {/* Stages List */}
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         <AnimatePresence mode="popLayout">
           {visibleStages.map((stageIndex) => {
             const stage = stages[stageIndex];
@@ -101,14 +101,14 @@ export default function ComplianceProcessCard() {
                 animate={{ opacity: 1, scale: isHighlight ? 1.05 : 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.5, ease: "backOut" }}
-                className={`flex items-center gap-3 p-3 rounded-xl border ${isHighlight
+                className={`flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg md:rounded-xl border ${isHighlight
                   ? "border-emerald-300 bg-emerald-50 shadow-md ring-1 ring-emerald-100"
                   : `border-transparent ${stage.bgColor}`
                   }`}
               >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${isHighlight ? "bg-emerald-600 text-white" : "bg-white " + stage.color
+                <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center shadow-sm ${isHighlight ? "bg-emerald-600 text-white" : "bg-white " + stage.color
                   }`}>
-                  <Icon size={18} strokeWidth={isHighlight ? 2.5 : 2} />
+                  <Icon size={16} className="md:w-[18px] md:h-[18px]" strokeWidth={isHighlight ? 2.5 : 2} />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -121,7 +121,7 @@ export default function ComplianceProcessCard() {
                 </div>
 
                 {stageIndex < 3 && (
-                  <div className="w-[1px] h-4 bg-slate-200" />
+                  <div className="w-[1px] h-3 md:h-4 bg-slate-200" />
                 )}
               </motion.div>
             );
