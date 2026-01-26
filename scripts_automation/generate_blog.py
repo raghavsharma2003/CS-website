@@ -316,11 +316,16 @@ def generate_blog_post():
             fm_clean = re.sub(r"^date:.*$", "", fm, flags=re.MULTILINE)
             # Remove blank lines from frontmatter (critical for YAML parsing)
             fm_lines = [line for line in fm_clean.split('\n') if line.strip()]
+            # Quote titles containing colons (YAML special character)
+            fm_lines = [
+                re.sub(r'^title:\s*([^"\'].+)$', lambda m: f'title: "{m.group(1)}"' if ':' in m.group(1) else m.group(0), line)
+                for line in fm_lines
+            ]
             fm_clean = '\n'.join(fm_lines)
             new_fm = f"{fm_clean}\ndate: {today}"
             content = content.replace(match.group(1), new_fm)
         else:
-             content = f"---\ntitle: {selected_topic}\ndate: {today}\ndescription: EU CBAM compliance guide.\ncategory: Compliance\n---\n\n{content}"
+             content = f"---\ntitle: \"{selected_topic}\"\ndate: {today}\ndescription: EU CBAM compliance guide.\ncategory: Compliance\n---\n\n{content}"
 
         # Safe Slug
         safe_slug = selected_topic.lower().replace(" ", "-").replace(":", "").replace("?", "").replace("/", "")[:60]
