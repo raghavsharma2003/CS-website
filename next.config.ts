@@ -6,11 +6,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/collect",
-        destination: "https://cbam-collect-test.vercel.app",
+        destination: "https://cbam-collect-test.vercel.app/collect",
       },
       {
         source: "/collect/:path*",
-        destination: "https://cbam-collect-test.vercel.app/:path*",
+        destination: "https://cbam-collect-test.vercel.app/collect/:path*",
       },
     ];
   },
