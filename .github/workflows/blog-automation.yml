@@ -40,6 +40,7 @@ jobs:
           git config --global user.name 'CarbonSettle Bot'
           git config --global user.email 'bot@carbonsettle.com'
           git add src/content/blog/
+          git add .automation_state.json
           # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
