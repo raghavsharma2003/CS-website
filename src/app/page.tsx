@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import LiabilityCalculator from "@/src/components/forensic/LiabilityCalculator";
 import ComplianceProcessCard from "@/src/components/ComplianceProcessCard";
+import { CBAM_COLLECT_URL } from "@/src/lib/constants";
 import dynamic from "next/dynamic";
 
 import Image from "next/image";
@@ -55,17 +56,14 @@ export default function HomePage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 md:gap-4">
-                <button
-                  onClick={() => {
-                    document.getElementById('calculator-section')?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start'
-                    });
-                  }}
-                  className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-slate-900 hover:bg-yellow-500 text-white hover:text-slate-900 font-bold rounded-xl transition-all flex items-center justify-center gap-2 md:gap-3 shadow-xl active:scale-95 text-sm md:text-base"
+                <a
+                  href={CBAM_COLLECT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-slate-900 hover:bg-emerald-600 text-white hover:text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 md:gap-3 shadow-xl active:scale-95 text-sm md:text-base cursor-pointer"
                 >
-                  Check My Risk <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
-                </button>
+                  CBAM Check <ArrowRight size={16} className="md:w-[18px] md:h-[18px]" />
+                </a>
                 <button
                   onClick={() => setIsXMLModalOpen(true)}
                   className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-white border border-slate-200 hover:border-slate-900 text-slate-700 font-bold rounded-xl transition-all text-sm md:text-base"
@@ -77,7 +75,7 @@ export default function HomePage() {
 
             {/* Right Content - Card Image */}
             <div className="flex-1 lg:flex-[1] w-full relative z-10 mt-8 lg:mt-0">
-               <motion.div
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
@@ -106,7 +104,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. Compliance Gap Comparison */}
-      <section 
+      <section
         className="py-12 md:py-16 lg:py-20 bg-slate-50"
         style={{
           backgroundImage: `
@@ -252,8 +250,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section 
-        id="calculator-section" 
+      <section
+        id="calculator-section"
         className="py-12 md:py-16 lg:py-20 bg-slate-50 border-t border-slate-200"
         style={{
           backgroundImage: `
